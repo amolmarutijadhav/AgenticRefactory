@@ -28,26 +28,32 @@ AgenticRefactory/
 ## Workflow
 1. **User selects a refactor scenario** (e.g., Java 11→17 upgrade).
 2. **Orchestrator loads the appropriate plugin factory** via the registry.
-3. **Each step (detection, refactor, validation, report) is executed** asynchronously, with all inputs/outputs logged.
+3. **Iterative Refactoring:**
+    - The orchestrator runs multiple iterations (detection → refactor → validation → report) until validation passes or a configurable `max_iterations` is reached.
+    - Each iteration’s input and output are logged in the runlog directory (e.g., `iteration-1_detection_output.json`).
+    - If validation fails, the next iteration begins with updated code and issues.
+    - The process stops early if validation passes, or after the maximum number of iterations.
 4. **LLM/AI is invoked** for ambiguous or complex code migrations.
-5. **Results and a detailed report are generated** and stored in the runlog.
+5. **Results and a detailed report are generated** and stored in the runlog, including a summary of all iterations and the final status.
 6. **User can review, approve, or provide feedback** for each run.
 
 ## Run Tracking & Transparency
 - Each run creates a unique directory in `runlog/` (e.g., `run-20250629-153045/`).
-- All step inputs/outputs, LLM prompts/responses, and a manifest (with file hashes and step summary) are saved.
+- All step inputs/outputs for every iteration, LLM prompts/responses, and a manifest (with file hashes and step summary) are saved.
+- The run summary includes all iterations, their results, and the final status (success or max iterations reached).
 - User feedback can be stored per run for continuous improvement.
 
 ## Extending the Framework
 - **Add a new refactor scenario:** Create a new plugin folder in `plugins/`, implement the required classes, and add a `metadata.json`.
 - **Add a new LLM provider:** Extend `core/llm_integration.py`.
-- **Customize workflows:** Edit `core/config.py` or provide a custom config file.
+- **Customize workflows and iteration control:** Edit `core/config.py` or `config.json` to set steps, verbosity, and `max_iterations`.
 
 ## Example: Java 11→17 Plugin
 - **Detection:** Scans for deprecated/removed APIs and outdated build settings.
 - **Refactor:** Updates build files and code, optionally using LLM for suggestions.
 - **Validation:** Runs tests and static analysis.
 - **Report:** Summarizes all changes and highlights manual steps if needed.
+- **Iterative Execution:** The plugin can be run for multiple iterations to address new or remaining issues until the codebase is fully upgraded and validated.
 
 ## Best Practices
 - Keep utilities generic and decoupled from plugins.
