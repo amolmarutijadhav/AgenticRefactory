@@ -40,6 +40,7 @@ class Java11To17Refactor(RefactorActionPlugin):
         # --- Agentic LLM remediation loop ---
         for i in range(max_llm_iterations):
             errors = self._compile_and_collect_errors(pom_xml, src_code)
+            print(f"[DEBUG] LLM remediation loop iteration {i+1}: compile errors found: {errors}")
             if not errors:
                 break
             for error in errors:
@@ -64,29 +65,53 @@ class Java11To17Refactor(RefactorActionPlugin):
 
         return codebase, report
 
-    def _compile_and_collect_errors(self, pom_xml, src_code):
-        """Write code to temp dir, run mvn compile, parse errors."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            pom_path = os.path.join(tmpdir, "pom.xml")
+    def _compile_and_collect_errors(self, pom_xml, src_code_or_tree):
+        """Write codebase to temp dir, run mvn compile, parse errors. Persist temp dir for inspection."""
+        import shutil
+        import uuid
+        runlog_base = os.path.abspath("runlog")
+        compile_tmp_dir = os.path.join(runlog_base, f"compile_tmp_{uuid.uuid4().hex[:8]}")
+        os.makedirs(compile_tmp_dir, exist_ok=True)
+        tmpdir = compile_tmp_dir
+        pom_path = os.path.join(tmpdir, "pom.xml")
+        with open(pom_path, "w", encoding="utf-8") as f:
+            f.write(pom_xml)
+
+        # Determine if codebase is a dict with full tree or just a string (legacy)
+        # If full tree, copy all files; else, fallback to old behavior
+        if isinstance(src_code_or_tree, dict):
+            # src_code_or_tree: {relative_path: code, ...}
+            for rel_path, code in src_code_or_tree.items():
+                if rel_path == "pom.xml":
+                    continue
+                abs_path = os.path.join(tmpdir, rel_path)
+                os.makedirs(os.path.dirname(abs_path), exist_ok=True)
+                with open(abs_path, "w", encoding="utf-8") as f:
+                    f.write(code)
+        else:
+            # Legacy: just a single Main.java
             src_dir = os.path.join(tmpdir, "src", "main", "java")
             os.makedirs(src_dir, exist_ok=True)
             src_file = os.path.join(src_dir, "Main.java")
-            with open(pom_path, "w", encoding="utf-8") as f:
-                f.write(pom_xml)
             with open(src_file, "w", encoding="utf-8") as f:
-                f.write(src_code)
-            try:
-                result = subprocess.run(["mvn", "compile"], cwd=tmpdir, capture_output=True, text=True, timeout=60)
-                output = result.stdout + "\n" + result.stderr
-            except Exception as e:
-                output = str(e)
-            # Parse javac errors (very basic)
-            errors = []
-            for line in output.splitlines():
-                m = re.search(r'\[ERROR\] (.*?\.java):(\d+): (.*)', line)
-                if m:
-                    errors.append({"file": m.group(1), "line": int(m.group(2)), "message": m.group(3)})
-            return errors
+                f.write(src_code_or_tree)
+
+        print(f"[DEBUG] Running mvn compile in temp dir (persisted): {tmpdir}")
+        try:
+            mvn_cmd = r"C:\\ProgramData\\chocolatey\\lib\\maven\\apache-maven-3.6.3\\bin\\mvn.cmd"
+            result = subprocess.run([mvn_cmd, "compile"], cwd=tmpdir, capture_output=True, text=True, timeout=60)
+            output = result.stdout + "\n" + result.stderr
+        except Exception as e:
+            output = str(e)
+        print(f"[DEBUG] mvn compile output:\n{output}")
+        print(f"[DEBUG] Compilation temp directory persisted at: {tmpdir}")
+        # Parse javac errors (very basic)
+        errors = []
+        for line in output.splitlines():
+            m = re.search(r'\[ERROR\] (.*?\.java):(\d+): (.*)', line)
+            if m:
+                errors.append({"file": m.group(1), "line": int(m.group(2)), "message": m.group(3)})
+        return errors
 
     def _extract_code_snippet(self, src_code, error):
         """Extracts a few lines around the error line."""

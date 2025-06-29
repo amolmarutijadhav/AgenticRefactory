@@ -41,8 +41,7 @@ if __name__ == "__main__":
     config = load_config()
     input_path = sys.argv[1] if len(sys.argv) > 1 else "sampleinput"
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S") + "-" + str(uuid.uuid4())[:8]
-    output_path = os.path.join("runlog", run_id, "output")
-    os.makedirs(output_path, exist_ok=True)
+    # output_path is now managed by orchestrator, not here
 
     codebase = load_codebase(
         input_path,
@@ -61,8 +60,7 @@ if __name__ == "__main__":
         and all(isinstance(v, str) for v in result[0].values())
     ):
         refactored_codebase, report = result
-        write_codebase(refactored_codebase, output_path)
-        print(f"Refactored project written to {output_path}")
+        print("Refactored project written to runlog/<run_id>/output (see runlog for details)")
         if report:
             print(report)
     else:

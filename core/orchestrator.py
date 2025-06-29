@@ -71,4 +71,23 @@ class RefactorOrchestrator:
         }
         with open(os.path.join(self.run_dir, "run_summary.json"), "w") as f:
             json.dump(summary, f, indent=2)
+
+        # Write the final refactored codebase to output directory within run_dir
+        output_dir = os.path.join(self.run_dir, "output")
+        os.makedirs(output_dir, exist_ok=True)
+        try:
+            # Import write_codebase from main or move to a utils module if needed
+            from main import write_codebase
+        except ImportError:
+            # fallback: define a minimal version here if needed
+            def write_codebase(codebase, output_path):
+                for rel_path, content in codebase.items():
+                    if not content or rel_path.endswith(os.sep) or rel_path in ('src', 'src/', 'src\\'):
+                        continue
+                    out_file = os.path.join(output_path, rel_path)
+                    os.makedirs(os.path.dirname(out_file), exist_ok=True)
+                    with open(out_file, 'w', encoding='utf-8') as f:
+                        f.write(content)
+        write_codebase(codebase, output_dir)
+
         return codebase, report
