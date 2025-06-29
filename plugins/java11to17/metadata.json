@@ -1,0 +1,8 @@
+{
+  "name": "Java 11 to 17 Upgrade",
+  "version": "1.0.0",
+  "description": "Automates Java 11 to 17 migration.",
+  "scenarios": ["jdk-upgrade"],
+  "dependencies": [],
+  "author": "AgenticRefactory Team"
+}
