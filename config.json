@@ -1,0 +1,6 @@
+{
+  "steps": ["detection", "refactor", "validation", "report"],
+  "max_iterations": 5,
+  "verbosity": "debug",
+  "llm_provider": "openai"
+}
