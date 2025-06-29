@@ -21,8 +21,8 @@ class Java11To17Refactor(RefactorActionPlugin):
             max_llm_iterations = config["max_llm_iterations"]
 
         pom_xml = codebase.get("pom.xml", "")
-        src_code = codebase.get("src", "")
 
+        pom_xml = codebase.get("pom.xml", "")
         # --- Static refactor phase ---
         pom_xml = re.sub(r'<source>11</source>', '<source>17</source>', pom_xml)
         pom_xml = re.sub(r'<target>11</target>', '<target>17</target>', pom_xml)
@@ -33,27 +33,34 @@ class Java11To17Refactor(RefactorActionPlugin):
                             r'\g<1>3.2.0\g<3>', pom_xml)
         pom_xml = re.sub(r'(<groupId>org.projectlombok</groupId>\s*<artifactId>lombok</artifactId>\s*<version>)([\d.]+)(</version>)',
                         r'\g<1>1.18.30\g<3>', pom_xml)
-        for api in deprecated_apis:
-            src_code = re.sub(rf'(import\s+{re.escape(api)}[\w.]*;)', r'// \1 // (removed in Java 17)', src_code)
-        src_code = re.sub(r'(import\s+sun\.misc\.Unsafe;)', r'// \1 // (removed in Java 17)', src_code)
+        codebase["pom.xml"] = pom_xml
+
+        # Refactor all Java files in the codebase
+        for rel_path, content in codebase.items():
+            if rel_path.endswith(".java"):
+                # Remove deprecated API imports
+                for api in deprecated_apis:
+                    content = re.sub(rf'(import\s+{re.escape(api)}[\w.]*;)', r'// \1 // (removed in Java 17)', content)
+                content = re.sub(r'(import\s+sun\.misc\.Unsafe;)', r'// \1 // (removed in Java 17)', content)
+                codebase[rel_path] = content
 
         # --- Agentic LLM remediation loop ---
         for i in range(max_llm_iterations):
-            errors = self._compile_and_collect_errors(pom_xml, src_code)
+            errors = self._compile_and_collect_errors(pom_xml, codebase)
             print(f"[DEBUG] LLM remediation loop iteration {i+1}: compile errors found: {errors}")
             if not errors:
                 break
+            # For each error, try to find and fix in the correct file
             for error in errors:
-                snippet = self._extract_code_snippet(src_code, error)
-                prompt = f"Given this Java code and the following compilation error, suggest a fix:\n{snippet}\nError: {error['message']}"
-                llm = LLMProvider("openai")
-                suggestion = llm.query(prompt)
-                # Insert suggestion as a comment above the error line for transparency
-                src_code = self._insert_llm_suggestion(src_code, error, suggestion)
-                self._log_llm_interaction(prompt, suggestion, error)
-
-        codebase["pom.xml"] = pom_xml
-        codebase["src"] = src_code
+                file_path = error.get("file")
+                if file_path and file_path in codebase:
+                    snippet = self._extract_code_snippet(codebase[file_path], error)
+                    prompt = f"Given this Java code and the following compilation error, suggest a fix:\n{snippet}\nError: {error['message']}"
+                    llm = LLMProvider("openai")
+                    suggestion = llm.query(prompt)
+                    # Insert suggestion as a comment above the error line for transparency
+                    codebase[file_path] = self._insert_llm_suggestion(codebase[file_path], error, suggestion)
+                    self._log_llm_interaction(prompt, suggestion, error)
 
         # Compose a report string (simple example)
         report = "Java 11→17 Refactor Report\n"
