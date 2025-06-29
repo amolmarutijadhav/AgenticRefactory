@@ -46,11 +46,12 @@ AgenticRefactory/
 ## Extending the Framework
 - **Add a new refactor scenario:** Create a new plugin folder in `plugins/`, implement the required classes, and add a `metadata.json`.
 - **Add a new LLM provider:** Extend `core/llm_integration.py`.
-- **Customize workflows and iteration control:** Edit `core/config.py` or `config.json` to set steps, verbosity, and `max_iterations`.
+- **Customize workflows and iteration control:** Edit `core/config.py` or `config.json` to set steps, verbosity, `max_iterations`, and `max_llm_iterations` (maximum LLM/agentic remediation cycles per refactor step).
 
-## Example: Java 11→17 Plugin
-- **Detection:** Scans for deprecated/removed APIs and outdated build settings.
-- **Refactor:** Updates build files and code, optionally using LLM for suggestions.
+## Example: Java 11→17 Plugin (Maven-based Projects)
+- **Scope:** The current migration plugin is designed for Maven-based Java projects (Spring Boot or non-Spring Boot) to ensure more accurate and reliable migration.
+- **Detection:** Scans for deprecated/removed APIs and outdated build settings in `pom.xml` and source code.
+- **Refactor:** Updates Maven build files and code, optionally using LLM for suggestions.
 - **Validation:** Runs tests and static analysis.
 - **Report:** Summarizes all changes and highlights manual steps if needed.
 - **Iterative Execution:** The plugin can be run for multiple iterations to address new or remaining issues until the codebase is fully upgraded and validated.
