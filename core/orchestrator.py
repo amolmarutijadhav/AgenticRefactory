@@ -31,9 +31,9 @@ class RefactorOrchestrator:
             refactor_input = {"issues": issues, "codebase": codebase}
             with open(os.path.join(self.run_dir, f"{iter_prefix}_refactor_input.json"), "w") as f:
                 json.dump(refactor_input, f, indent=2)
-            codebase = await self.refactor.apply_refactor(issues, codebase)
+            codebase, refactor_report = await self.refactor.apply_refactor(issues, codebase)
             with open(os.path.join(self.run_dir, f"{iter_prefix}_refactor_output.json"), "w") as f:
-                json.dump({"codebase": codebase}, f, indent=2)
+                json.dump({"codebase": codebase, "refactor_report": refactor_report}, f, indent=2)
 
             # Validation
             validation_input = {"codebase": codebase}
@@ -71,4 +71,4 @@ class RefactorOrchestrator:
         }
         with open(os.path.join(self.run_dir, "run_summary.json"), "w") as f:
             json.dump(summary, f, indent=2)
-        return report
+        return codebase, report

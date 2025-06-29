@@ -3,5 +3,7 @@
   "max_iterations": 1,
   "max_llm_iterations": 3,
   "verbosity": "debug",
-  "llm_provider": "openai"
+  "llm_provider": "openai",
+  "allowed_extensions": [".java", ".xml", ".properties", ".yml", ".yaml", ".json", ".md", ".txt", ".csv"],
+  "ignore_dirs": ["target", ".git", ".idea", ".vscode", "out"]
 }

@@ -1,0 +1,33 @@
+{
+  "run_id": "run-20250629-234242",
+  "timestamp": "2025-06-29T23:42:42.670596",
+  "iterations": [
+    {
+      "iteration": 1,
+      "issues": {
+        "issues": [
+          "Java version in pom.xml is 11",
+          "Found javax dependency: javax.xml.bind:jaxb-api",
+          "Spring Boot version is 2.5.0 (needs upgrade to 3.x for Java 17)"
+        ],
+        "projectType": "spring-boot",
+        "detectedDependencies": [
+          "javax.xml.bind:jaxb-api"
+        ],
+        "deprecatedApis": [
+          "javax.xml.bind"
+        ],
+        "suggestedActions": [
+          "Update <maven.compiler.source> and <maven.compiler.target> to 17",
+          "Replace javax.xml.bind:jaxb-api with jakarta equivalent",
+          "Upgrade Lombok to latest version for Java 17 compatibility",
+          "Upgrade Spring Boot to 3.x for Java 17 compatibility"
+        ]
+      },
+      "valid": true,
+      "report": "Java 11\u219217 Refactor Report\nDetected Issues:\n- issues\n- projectType\n- detectedDependencies\n- deprecatedApis\n- suggestedActions\nValidation: PASSED\n"
+    }
+  ],
+  "final_status": "success",
+  "final_report": "Java 11\u219217 Refactor Report\nDetected Issues:\n- issues\n- projectType\n- detectedDependencies\n- deprecatedApis\n- suggestedActions\nValidation: PASSED\n"
+}
